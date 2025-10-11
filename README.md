@@ -10,8 +10,8 @@ Berry is a widget/anki-addon that displays which devices are connected to the Bl
 </h5>
 
 ## Potential errors 
-- This add-on was only tested on macOS, so if you're on LinuxOS and Windows, you'll be a pioneer of this add-on. \
-- 
+- This add-on was only tested on macOS, so if you're on LinuxOS and Windows, you'll be a pioneer of this add-on in those OS.
+- When you connect, click "D" to refresh and see which devices you have connected.
 
 ### 💞 Support my work
 
