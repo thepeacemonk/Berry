@@ -1,0 +1,72 @@
+/* Berry Widget Styles */
+
+#Berry-widget-container {
+    height: 200px; 
+    width: 200px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--Berry-bg-color);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-radius: 24px;
+    padding: 20px;
+    margin: 20px auto;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+    transition: background-color 0.3s ease;
+}
+
+/* Theme-specific borders */
+#Berry-widget-container.light-theme {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+#Berry-widget-container.dark-theme {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* General Component Styles using CSS Variables */
+#Berry-title {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: var(--Berry-title-color);
+}
+
+#Berry-device-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.Berry-device-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  border-radius: 12px;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+  background-color: var(--Berry-item-bg-color);
+  color: var(--Berry-item-text-color);
+}
+
+.Berry-device-item-empty {
+    justify-content: center;
+    color: var(--Berry-empty-text-color);
+}
+
+.Berry-device-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 12px;
+}
+.Berry-device-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: var(--Berry-icon-color);
+}
