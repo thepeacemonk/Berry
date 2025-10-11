@@ -25,6 +25,7 @@ from aqt.qt import (
     QPixmap,
     QUrl,
 )
+from aqt.theme import theme_manager
 
 # --- Helper function to create colored square buttons ---
 def create_color_button(initial_color: str, parent: QWidget) -> QPushButton:
@@ -258,81 +259,114 @@ class BerrySettingsDialog(QDialog):
         self.accept()
 
     def get_stylesheet(self) -> str:
-        """Returns the QSS stylesheet for the dialog."""
-        return """
-            QDialog {
-                background-color: #2c2c2e;
-                color: #e5e5e7;
+        """Returns a QSS stylesheet that adapts to Anki's light/dark theme."""
+        # Use the 'night_mode' boolean property from the theme manager
+        is_dark = theme_manager.night_mode
+
+        if is_dark:
+            # --- Dark Theme Colors ---
+            colors = {
+                "dialog_bg": "#2c2c2e",
+                "text": "#e5e5e7",
+                "group_border": "#3a3a3c",
+                "button_bg": "#3a3a3c",
+                "button_bg_hover": "#4a4a4c",
+                "button_checked": "#555557",
+                "slider_groove": "#3a3a3c",
+                "save_button_bg": "#BD87FA",
+                "save_button_text": "#ffffff",
+                "save_button_hover": "#d1a3fa"
             }
-            QGroupBox {
+        else:
+            # --- Light Theme Colors ---
+            colors = {
+                "dialog_bg": "#f0f0f0",
+                "text": "#212121",
+                "group_border": "#dcdcdc",
+                "button_bg": "#e1e1e1",
+                "button_bg_hover": "#d1d1d1",
+                "button_checked": "#c1c1c1",
+                "slider_groove": "#dcdcdc",
+                "save_button_bg": "#8a2be2",
+                "save_button_text": "#ffffff",
+                "save_button_hover": "#9932cc"
+            }
+
+        return f"""
+            QDialog {{
+                background-color: {colors['dialog_bg']};
+                color: {colors['text']};
+            }}
+            QGroupBox {{
                 font-size: 16px;
                 font-weight: bold;
-                border: 1px solid #3a3a3c;
+                border: 1px solid {colors['group_border']};
                 border-radius: 8px;
                 margin-top: 10px;
                 padding: 15px;
-            }
-            QGroupBox::title {
+            }}
+            QGroupBox::title {{
                 subcontrol-origin: margin;
                 subcontrol-position: top left;
                 padding: 0 5px;
                 left: 10px;
-            }
-            QLabel {
+            }}
+            QLabel {{
                 font-size: 14px;
-            }
-            QLabel[text="<b>Light Theme</b>"], QLabel[text="<b>Dark Theme</b>"] {
+            }}
+            QLabel[text="<b>Light Theme</b>"], QLabel[text="<b>Dark Theme</b>"] {{
                 font-size: 15px;
-                color: #e5e5e7;
-            }
-            #themeToggleButton {
-                background-color: #3a3a3c;
+                color: {colors['text']};
+            }}
+            #themeToggleButton {{
+                background-color: {colors['button_bg']};
                 border: none;
                 border-radius: 8px;
                 padding: 8px 16px;
                 font-size: 14px;
-            }
-            #themeToggleButton:checked {
-                background-color: #555557;
-            }
+            }}
+            #themeToggleButton:checked {{
+                background-color: {colors['button_checked']};
+            }}
             QPushButton[text="Donate"],
-            QPushButton[text="Report Bug"] {
-                background-color: #3a3a3c;
+            QPushButton[text="Report Bug"] {{
+                background-color: {colors['button_bg']};
                 border: none;
                 border-radius: 8px;
                 padding: 8px 16px;
                 font-size: 14px;
                 margin-bottom: 10px;
-            }
+            }}
             QPushButton[text="Donate"]:hover,
-            QPushButton[text="Report Bug"]:hover {
-                background-color: #4a4a4c;
-            }
-            QSlider::groove:horizontal {
-                background: #3a3a3c; height: 6px; border-radius: 3px;
-            }
-            QSlider::handle:horizontal {
+            QPushButton[text="Report Bug"]:hover {{
+                background-color: {colors['button_bg_hover']};
+            }}
+            QSlider::groove:horizontal {{
+                background: {colors['slider_groove']}; height: 6px; border-radius: 3px;
+            }}
+            QSlider::handle:horizontal {{
                 background: white; width: 20px; height: 20px;
                 margin: -7px 0; border-radius: 10px;
-            }
-            QSlider::sub-page:horizontal {
+                border: 1px solid #ccc;
+            }}
+            QSlider::sub-page:horizontal {{
                 background: #BD87FA; height: 6px; border-radius: 3px;
-            }
-            QDialogButtonBox QPushButton {
-                background-color: #3a3a3c;
+            }}
+            QDialogButtonBox QPushButton {{
+                background-color: {colors['button_bg']};
                 padding: 8px 16px;
                 border-radius: 8px;
-            }
-            QDialogButtonBox QPushButton:hover {
-                background-color: #4a4a4c;
-            }
+            }}
+            QDialogButtonBox QPushButton:hover {{
+                background-color: {colors['button_bg_hover']};
+            }}
             /* Style for the Save button specifically */
-            QDialogButtonBox QPushButton[text="Save"] {
-                background-color: #BD87FA;
-                color: #ffffff;
-            }
-            QDialogButtonBox QPushButton[text="Save"]:hover {
-                background-color: #d1a3fa;
-            }
+            QDialogButtonBox QPushButton[text="Save"] {{
+                background-color: {colors['save_button_bg']};
+                color: {colors['save_button_text']};
+            }}
+            QDialogButtonBox QPushButton[text="Save"]:hover {{
+                background-color: {colors['save_button_hover']};
+            }}
         """
 
