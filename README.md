@@ -9,6 +9,11 @@
 Berry is a widget/anki-addon that displays which devices are connected to the Bluetooth directly from your Anki main menu.
 </h5>
 
+## Preview of Berry
+
+<img width="80%" height="auto" alt="berry preview" src="https://github.com/user-attachments/assets/040d74d5-0f95-4644-8bf3-a800ddd545b0" />
+
+
 ## Potential errors 
 - This add-on was only tested on macOS, so if you're on LinuxOS and Windows, you'll be a pioneer of this add-on in those OS.
 - When you connect, click "D" to refresh and see which devices you have connected.
