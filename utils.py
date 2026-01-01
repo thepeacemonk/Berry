@@ -26,15 +26,73 @@ def get_connected_devices() -> List[Dict[str, Any]]:
 
 def get_windows_devices() -> List[Dict[str, Any]]:
     """
-    Fetches connected Bluetooth devices on Windows using PowerShell.
+    Fetches connected Bluetooth devices on Windows using PnP (with aggressive filtering).
+    """
+    return get_windows_devices_pnp()
+
+def get_windows_devices_winrt() -> List[Dict[str, Any]]:
+    """
+    Uses PowerShell and WinRT to get genuinely CONNECTED devices.
     """
     devices = []
     try:
-        # PowerShell command to get connected Bluetooth devices and output as JSON
+        # PowerShell script using WinRT APIs
+        # Protocol IDs:
+        # {e0cbf06c-cd8b-4647-bb8a-263b43f0f974} = Bluetooth Classic
+        # {bb7bb05e-5972-42b5-94fc-76eaa7084d49} = Bluetooth LE
+        ps_script = """
+        [Windows.Devices.Enumeration.DeviceInformation, Windows.Devices.Enumeration, ContentType=WindowsRuntime] | Out-Null
+        $aqs = 'System.Devices.Aep.IsConnected:=System.StructuredQueryType.Boolean#True AND (System.Devices.Aep.ProtocolId:="{e0cbf06c-cd8b-4647-bb8a-263b43f0f974}" OR System.Devices.Aep.ProtocolId:="{bb7bb05e-5972-42b5-94fc-76eaa7084d49}")'
+        $devices = [Windows.Devices.Enumeration.DeviceInformation]::FindAllAsync($aqs).GetAwaiter().GetResult()
+        $devices | Select-Object Name, Id | ConvertTo-Json
+        """
+        
+        cmd = ["powershell", "-Command", ps_script]
+        
+        si = subprocess.STARTUPINFO()
+        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, check=True, timeout=15, startupinfo=si, encoding='utf-8', errors='replace'
+        )
+        
+        if not result.stdout.strip():
+            return []
+
+        data = json.loads(result.stdout)
+        
+        if isinstance(data, dict):
+            data = [data]
+            
+        for device_info in data:
+            name = device_info.get("Name")
+            if name:
+                devices.append({
+                    "name": name,
+                    "type": classify_device(name),
+                    "address": device_info.get("Id", "N/A")
+                })
+                
+    except Exception as e:
+        print(f"Berry Error: WinRT discovery failed. {e}")
+        # Could fallback here if needed
+        
+    return devices
+
+def get_windows_devices_pnp() -> List[Dict[str, Any]]:
+    """
+    PnP method. Fetches actively connected Bluetooth devices.
+    """
+    devices = []
+    try:
+        # PowerShell command to get Bluetooth devices
+        # NOTE: Windows PowerShell cannot reliably distinguish "paired" from "actively connected"
+        # This will show all paired devices with Status = OK (which includes connected devices)
+        # The aggressive filtering below removes system artifacts (RFCOMM, Services, etc.)
         cmd = [
             "powershell",
             "-Command",
-            "Get-PnpDevice -Class 'Bluetooth' | Where-Object { $_.Status -eq 'OK' } | Select-Object FriendlyName, DeviceID | ConvertTo-Json"
+            "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; Get-PnpDevice -Class 'Bluetooth' | Where-Object { $_.Status -eq 'OK' } | Select-Object FriendlyName, DeviceID | ConvertTo-Json"
         ]
         
         # startupinfo to prevent the console window from appearing
@@ -42,7 +100,7 @@ def get_windows_devices() -> List[Dict[str, Any]]:
         si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         
         result = subprocess.run(
-            cmd, capture_output=True, text=True, check=True, timeout=10, startupinfo=si, encoding='utf-8'
+            cmd, capture_output=True, text=True, check=True, timeout=10, startupinfo=si, encoding='utf-8', errors='replace'
         )
         
         data = json.loads(result.stdout)
@@ -54,6 +112,23 @@ def get_windows_devices() -> List[Dict[str, Any]]:
         for device_info in data:
             name = device_info.get("FriendlyName")
             if name:
+                # Filter out internal/service devices
+                name_lower = name.lower()
+                invalid_keywords = [
+                    "enumerator", "enumerador", 
+                    "avrcp", "a2dp", "hfp", "hands-free",
+                    "le bluetooth", "le_bluetooth",
+                    "rfcomm", "protocol", "tdi",
+                    "service", "serviço",
+                    "intel", "realtek", "qualcomm", "mediatek", # Adapters
+                    "wireless bluetooth", "microsoft bluetooth",
+                    "generic bluetooth", "oobe", "gatt", "endpoint", "generic",
+                    "aadp", "iap", "spp"
+                ]
+                
+                if any(keyword in name_lower for keyword in invalid_keywords):
+                    continue
+                    
                 devices.append({
                     "name": name,
                     "type": classify_device(name),

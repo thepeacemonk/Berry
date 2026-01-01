@@ -24,6 +24,8 @@ from aqt.qt import (
     QFormLayout,
     QPixmap,
     QUrl,
+    QScrollArea,
+    QApplication,
 )
 from aqt.theme import theme_manager
 
@@ -66,6 +68,16 @@ class BerrySettingsDialog(QDialog):
         self.addon_package = addon_package
         self.setWindowTitle("Berry Settings")
         self.setMinimumWidth(450)
+        
+        # --- Calculate appropriate height based on screen size ---
+        screen = QApplication.primaryScreen()
+        screen_geometry = screen.availableGeometry()
+        # Use 80% of available screen height, with min/max constraints
+        calculated_height = int(screen_geometry.height() * 0.8)
+        min_height = 400
+        max_height = 800
+        dialog_height = max(min_height, min(calculated_height, max_height))
+        self.setMinimumHeight(dialog_height)
 
         # --- Config Management ---
         # Keep a reference to the original config object to update it on save
@@ -79,7 +91,21 @@ class BerrySettingsDialog(QDialog):
 
     def setup_ui(self):
         """Builds the user interface for the dialog."""
-        layout = QVBoxLayout(self)
+        # Main layout for the dialog
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+        
+        # Create a scroll area for the content
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        scroll_area.setObjectName("settingsScrollArea")
+        
+        # Create a container widget for the scrollable content
+        content_widget = QWidget()
+        layout = QVBoxLayout(content_widget)
         layout.setContentsMargins(20, 20, 20, 20)
         layout.setSpacing(15)
         
@@ -170,9 +196,22 @@ class BerrySettingsDialog(QDialog):
         layout.addWidget(opacity_group)
         layout.addWidget(colors_group)
         layout.addStretch()
+        
+        # Set the content widget to the scroll area
+        scroll_area.setWidget(content_widget)
+        
+        # Add scroll area to main layout
+        main_layout.addWidget(scroll_area)
 
         # --- Save/Cancel/Restore Buttons ---
+        # Keep buttons outside scroll area so they're always visible
+        # Create a container widget for the button box with padding
+        button_container = QWidget()
+        button_container_layout = QVBoxLayout(button_container)
+        button_container_layout.setContentsMargins(20, 15, 20, 20)  # left, top, right, bottom padding
+        
         button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Cancel)
+        button_box.setCenterButtons(True)  # Center the buttons
         self.restore_button = QPushButton("Restore Defaults")
         button_box.addButton(self.restore_button, QDialogButtonBox.ButtonRole.ResetRole)
 
@@ -180,7 +219,8 @@ class BerrySettingsDialog(QDialog):
         button_box.rejected.connect(self.reject)
         self.restore_button.clicked.connect(self.on_restore_defaults)
         
-        layout.addWidget(button_box)
+        button_container_layout.addWidget(button_box)
+        main_layout.addWidget(button_container)
         
         self.setStyleSheet(self.get_stylesheet())
 
@@ -297,6 +337,34 @@ class BerrySettingsDialog(QDialog):
                 background-color: {colors['dialog_bg']};
                 color: {colors['text']};
             }}
+            /* Scroll Area with transparent background */
+            #settingsScrollArea {{
+                border: none;
+                background-color: transparent;
+            }}
+            #settingsScrollArea > QWidget {{
+                background-color: transparent;
+            }}
+            /* Transparent scrollbar background */
+            QScrollBar:vertical {{
+                background: transparent;
+                width: 12px;
+                margin: 0px;
+            }}
+            QScrollBar::handle:vertical {{
+                background: rgba(189, 135, 250, 0.6);
+                border-radius: 6px;
+                min-height: 20px;
+            }}
+            QScrollBar::handle:vertical:hover {{
+                background: rgba(189, 135, 250, 0.8);
+            }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+                height: 0px;
+            }}
+            QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
+                background: transparent;
+            }}
             QGroupBox {{
                 font-size: 16px;
                 font-weight: bold;
@@ -351,6 +419,10 @@ class BerrySettingsDialog(QDialog):
             }}
             QSlider::sub-page:horizontal {{
                 background: #BD87FA; height: 6px; border-radius: 3px;
+            }}
+            QDialogButtonBox {{
+                padding: 10px 20px;
+                background-color: {colors['dialog_bg']};
             }}
             QDialogButtonBox QPushButton {{
                 background-color: {colors['button_bg']};

@@ -164,3 +164,4 @@ gui_hooks.deck_browser_will_render_content.append(add_Berry_widget)
 action = QAction("Berry Settings", mw)
 action.triggered.connect(show_settings_dialog)
 mw.form.menuTools.addAction(action)
+
